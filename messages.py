@@ -5,6 +5,7 @@ Mensagens e seus códigos:
 Hello       1
 Get         4
 Chunk_info  3
+Query       2
 """
 def hello_encode(lst):
     """

@@ -2,7 +2,7 @@ from common import listToBytes, msgId
 import pytest
 import binascii
 import messages
-
+import socket
             
 class TestId:
     def test_msgId(self):
@@ -105,7 +105,54 @@ class TestChunkInfoEncode:
         
         lst = messages.chunk_info_decode(messages.chunk_info_encode([]))
         assert lst == []
+
+class TestQueryEncode:
+    def setup_method(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.s.bind(('',0))
+        self.infoS = self.s.getsockname()
     
+    def teardown_method(self):
+        self.s.close()
+    
+    def test_hello_msg_varios(self):
+        ba = bytearray()
+        ba.extend((2).to_bytes(length=2, byteorder='big'))  # id
+        ba.extend(socket.inet_aton(self.infoS[0]))          # IP
+        ba.extend(self.infoS[1].to_bytes(length=2, byteorder='big'))    # Porta
+        ba.extend((1).to_bytes(length=2, byteorder='big'))  # TTL
+        ba.extend(listToBytes([3,1,2]))                     # Lista
+        assert ba == messages.query_encode(self.infoS, 1, [3,1,2])
+    
+    def test_hello_msg_unico(self):
+        ba = bytearray()
+        ba.extend((2).to_bytes(length=2, byteorder='big'))  # id
+        ba.extend(socket.inet_aton(self.infoS[0]))          # IP
+        ba.extend(self.infoS[1].to_bytes(length=2, byteorder='big'))    # Porta
+        ba.extend((3).to_bytes(length=2, byteorder='big'))  # TTL
+        ba.extend(listToBytes([3]))                         # Lista
+        assert ba == messages.query_encode(self.infoS, 3, [3])
+    
+    def test_hello_msg_vazio(self):
+        ba = bytearray()
+        ba.extend((2).to_bytes(length=2, byteorder='big'))  # id
+        ba.extend(socket.inet_aton(self.infoS[0]))          # IP
+        ba.extend(self.infoS[1].to_bytes(length=2, byteorder='big'))    # Porta
+        ba.extend((10).to_bytes(length=2, byteorder='big'))  # TTL
+        ba.extend(listToBytes([]))                          # Lista
+        assert ba == messages.query_encode(self.infoS, 10, [])
+    
+    def test_hello_decode(self):
+        tuple = messages.query_decode(messages.query_encode(self.infoS, 1, [3,1,2]))
+        assert tuple == (self.infoS[0], self.infoS[1], 1, [3,1,2])
+        
+        tuple = messages.query_decode(messages.query_encode(self.infoS, 3, [3]))
+        assert tuple == (self.infoS[0], self.infoS[1], 3, [3])
+        
+        tuple = messages.query_decode(messages.query_encode(self.infoS, 10, []))
+        assert tuple == (self.infoS[0], self.infoS[1], 10, [])
+
 # class TestOk:
 #     def test_ok_msg(self):
 #         ba = bytearray()
