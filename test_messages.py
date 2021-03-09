@@ -7,7 +7,7 @@ import messages
 class TestId:
     def test_msgId(self):
         assert msgId(messages.hello_encode([1,2,3])) == 1
-        assert msgId(messages.connection_encode(40532)) == 2
+        assert msgId(messages.get_encode([1])) == 4
         assert msgId(messages.info_file_encode("teste1.txt",135)) == 3
         assert msgId(messages.ok_encode()) == 4
         assert msgId(messages.fim_encode()) == 5
@@ -42,6 +42,37 @@ class TestHelloEncode:
         assert lst == [3]
         
         lst = messages.hello_decode(messages.hello_encode([]))
+        assert lst == []
+
+class TestGetEncode:
+    def test_hello_msg_varios(self):
+        ba = bytearray()
+        ba.extend((4).to_bytes(length=2, byteorder='big'))
+        ba.extend((3).to_bytes(length=2, byteorder='big'))
+        ba.extend(listToBytes([3,1,2]))
+        assert ba == messages.get_encode([3,1,2])
+    
+    def test_hello_msg_unico(self):
+        ba = bytearray()
+        ba.extend((4).to_bytes(length=2, byteorder='big'))
+        ba.extend((1).to_bytes(length=2, byteorder='big'))
+        ba.extend(listToBytes([3]))
+        assert ba == messages.get_encode([3])
+    
+    def test_hello_msg_vazio(self):
+        ba = bytearray()
+        ba.extend((4).to_bytes(length=2, byteorder='big'))
+        ba.extend((0).to_bytes(length=2, byteorder='big'))
+        assert ba == messages.get_encode([])
+    
+    def test_hello_decode(self):
+        lst = messages.get_decode(messages.get_encode([3,1,2]))
+        assert lst == [3,1,2]
+        
+        lst = messages.get_decode(messages.get_encode([3]))
+        assert lst == [3]
+        
+        lst = messages.get_decode(messages.get_encode([]))
         assert lst == []
     
 # class TestOk:

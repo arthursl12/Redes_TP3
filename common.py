@@ -1,3 +1,14 @@
+def messageList(id, lst):
+    """
+    Cria uma mensagem com id passado e lista a ser codificada por 
+    'listByteEncoder'
+    Retorna um bytearray com a mensagem
+    """
+    ba = bytearray()
+    ba.extend(id.to_bytes(length=2, byteorder='big'))
+    ba.extend(listByteEncoder(lst))
+    return ba
+
 def listByteEncoder(lst):
     """
     Faz o encode binário de uma lista de inteiros
