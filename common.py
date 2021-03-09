@@ -1,3 +1,24 @@
+def listByteEncoder(lst):
+    """
+    Faz o encode binário de uma lista de inteiros
+    Retorna um bytearray com (nessa ordem):
+        2 bytes: tamanho da lista
+        2 bytes * len(lst): elementos da lista
+    """
+    ba = bytearray()
+    size = len(lst)
+    ba.extend(size.to_bytes(length=2, byteorder='big'))
+    ba.extend(listToBytes(lst))
+    return ba
+
+def listByteDecoder(encLst):
+    """
+    Recupera a lista no formato codificado por 'listByteEncoder'
+    """
+    size = int.from_bytes(encLst[:2], "big")
+    assert len(encLst) == 2+2*size
+    return bytesToList(encLst[2:])
+
 def listToBytes(l):
     """
     Dada uma lista (ou outro iterável) de inteiros, 

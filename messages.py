@@ -1,4 +1,5 @@
-from common import listToBytes, bytesToList, msgId
+from common import listByteDecoder, listByteEncoder, msgId
+
 
 def hello_encode(lst):
     """
@@ -9,9 +10,7 @@ def hello_encode(lst):
     """
     ba = bytearray()
     ba.extend((1).to_bytes(length=2, byteorder='big'))
-    size = len(lst)
-    ba.extend(size.to_bytes(length=2, byteorder='big'))
-    ba.extend(listToBytes(lst))
+    ba.extend(listByteEncoder(lst))
     return ba
 
 def hello_decode(msg):
@@ -21,9 +20,7 @@ def hello_decode(msg):
     Retorna a lista contida na mensagem
     """
     assert msgId(msg) == 1
-    size = int.from_bytes(msg[2:4], "big")
-    assert len(msg) == 2+2+2*size
-    return bytesToList(msg[4:])
+    return listByteDecoder(msg[2:])
 
 def get_encode():
     pass
