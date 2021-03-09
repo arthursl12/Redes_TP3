@@ -23,6 +23,19 @@ def bytesToList(ba):
         num = int.from_bytes(numb, "big")
         lst.append(num)
     return lst
-        
+
+def msgId(b_msg):
+    """
+    Dada uma mensagem em bytes 'b_msg', retorna o inteiro referente à qual tipo 
+    de mensagem ela é. 
+
+    Isso é representado pelos dois primeiros bytes da mensagem.
+    O código correspondente da cada mensagem está na especificação
+    """
+    assert type(b_msg) == bytearray
+    assert len(b_msg) >= 2
+    
+    id = b_msg[:2]
+    return int.from_bytes(id, "big")
 
 
