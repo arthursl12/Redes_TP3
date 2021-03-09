@@ -1,3 +1,4 @@
+from socket import inet_aton, inet_ntoa
 from common import listByteDecoder, listByteEncoder, msgId, messageList
 
 """
@@ -61,11 +62,36 @@ def chunk_info_decode(msg):
     assert msgId(msg) == 3
     return listByteDecoder(msg[2:])
 
-def query_encode():
-    pass
+def query_encode(infoSocket, TTL, lst):
+    """
+    Cria e retorna uma mensagem do tipo Query: 
+        2 bytes, representando o 2 (código da mensagem)
+        4 bytes, representando IP do socket passado
+        2 bytes, representando o porto do socket passado
+        2 bytes, representando o TTL a ser enviado
+        2 bytes, representando quantas chunks na lista
+        2 bytes * len(lst), representando a lista em bytearray
+    """
+    ba = bytearray()
+    ba.extend((2).to_bytes(length=2, byteorder='big'))
+    ba.extend(inet_aton(infoSocket[0]))
+    ba.extend(infoSocket[1].to_bytes(length=2, byteorder='big'))
+    ba.extend(TTL.to_bytes(length=2, byteorder='big'))
+    ba.extend(listByteEncoder(lst))
+    return ba
 
-def query_decode():
-    pass
+def query_decode(msg):
+    """
+    Decodifica uma mensagem em binário do tipo Query.
+    Verifica seu id, levanta uma exceção se houver algo errado
+    Retorna uma tupla: (IP, porto, TTL, lista)
+    """
+    assert msgId(msg) == 2
+    ip = inet_ntoa(msg[2:6])
+    porto = int.from_bytes(msg[6:8], "big")
+    ttl = int.from_bytes(msg[8:10], "big")
+    lst = listByteDecoder(msg[10:])
+    return (ip, porto, ttl, lst)
 
 def response_encode():
     pass

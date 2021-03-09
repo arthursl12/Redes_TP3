@@ -1,15 +1,24 @@
-from common import listToBytes, msgId
+from common import listByteEncoder, listToBytes, msgId
 import pytest
 import binascii
 import messages
 import socket
             
 class TestId:
+    def setup_method(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.s.bind(('',0))
+        self.infoS = self.s.getsockname()
+    
+    def teardown_method(self):
+        self.s.close()
+        
     def test_msgId(self):
         assert msgId(messages.hello_encode([1,2,3])) == 1
         assert msgId(messages.get_encode([1])) == 4
         assert msgId(messages.chunk_info_encode([2,5,3,67,3])) == 3
-        assert msgId(messages.ok_encode()) == 4
+        assert msgId(messages.query_encode(self.infoS, 3, [1])) == 2
         assert msgId(messages.fim_encode()) == 5
         assert msgId(messages.ack_encode(0)) == 7
 
@@ -45,27 +54,27 @@ class TestHelloEncode:
         assert lst == []
 
 class TestGetEncode:
-    def test_hello_msg_varios(self):
+    def test_get_msg_varios(self):
         ba = bytearray()
         ba.extend((4).to_bytes(length=2, byteorder='big'))
         ba.extend((3).to_bytes(length=2, byteorder='big'))
         ba.extend(listToBytes([3,1,2]))
         assert ba == messages.get_encode([3,1,2])
     
-    def test_hello_msg_unico(self):
+    def test_get_msg_unico(self):
         ba = bytearray()
         ba.extend((4).to_bytes(length=2, byteorder='big'))
         ba.extend((1).to_bytes(length=2, byteorder='big'))
         ba.extend(listToBytes([3]))
         assert ba == messages.get_encode([3])
     
-    def test_hello_msg_vazio(self):
+    def test_get_msg_vazio(self):
         ba = bytearray()
         ba.extend((4).to_bytes(length=2, byteorder='big'))
         ba.extend((0).to_bytes(length=2, byteorder='big'))
         assert ba == messages.get_encode([])
     
-    def test_hello_decode(self):
+    def test_get_decode(self):
         lst = messages.get_decode(messages.get_encode([3,1,2]))
         assert lst == [3,1,2]
         
@@ -76,27 +85,27 @@ class TestGetEncode:
         assert lst == []
 
 class TestChunkInfoEncode:
-    def test_hello_msg_varios(self):
+    def test_chunk_info_msg_varios(self):
         ba = bytearray()
         ba.extend((3).to_bytes(length=2, byteorder='big'))
         ba.extend((3).to_bytes(length=2, byteorder='big'))
         ba.extend(listToBytes([3,1,2]))
         assert ba == messages.chunk_info_encode([3,1,2])
     
-    def test_hello_msg_unico(self):
+    def test_chunk_info_msg_unico(self):
         ba = bytearray()
         ba.extend((3).to_bytes(length=2, byteorder='big'))
         ba.extend((1).to_bytes(length=2, byteorder='big'))
         ba.extend(listToBytes([3]))
         assert ba == messages.chunk_info_encode([3])
     
-    def test_hello_msg_vazio(self):
+    def test_chunk_info_msg_vazio(self):
         ba = bytearray()
         ba.extend((3).to_bytes(length=2, byteorder='big'))
         ba.extend((0).to_bytes(length=2, byteorder='big'))
         assert ba == messages.chunk_info_encode([])
     
-    def test_hello_decode(self):
+    def test_chunk_info_decode(self):
         lst = messages.chunk_info_decode(messages.chunk_info_encode([3,1,2]))
         assert lst == [3,1,2]
         
@@ -116,34 +125,35 @@ class TestQueryEncode:
     def teardown_method(self):
         self.s.close()
     
-    def test_hello_msg_varios(self):
+    def test_query_msg_varios(self):
         ba = bytearray()
         ba.extend((2).to_bytes(length=2, byteorder='big'))  # id
         ba.extend(socket.inet_aton(self.infoS[0]))          # IP
         ba.extend(self.infoS[1].to_bytes(length=2, byteorder='big'))    # Porta
         ba.extend((1).to_bytes(length=2, byteorder='big'))  # TTL
-        ba.extend(listToBytes([3,1,2]))                     # Lista
+        ba.extend(listByteEncoder([3,1,2]))                     # Lista
         assert ba == messages.query_encode(self.infoS, 1, [3,1,2])
+        assert len(ba) == 2+4+2+2+2+6
     
-    def test_hello_msg_unico(self):
+    def test_query_msg_unico(self):
         ba = bytearray()
         ba.extend((2).to_bytes(length=2, byteorder='big'))  # id
         ba.extend(socket.inet_aton(self.infoS[0]))          # IP
         ba.extend(self.infoS[1].to_bytes(length=2, byteorder='big'))    # Porta
         ba.extend((3).to_bytes(length=2, byteorder='big'))  # TTL
-        ba.extend(listToBytes([3]))                         # Lista
+        ba.extend(listByteEncoder([3]))                         # Lista
         assert ba == messages.query_encode(self.infoS, 3, [3])
     
-    def test_hello_msg_vazio(self):
+    def test_query_msg_vazio(self):
         ba = bytearray()
         ba.extend((2).to_bytes(length=2, byteorder='big'))  # id
         ba.extend(socket.inet_aton(self.infoS[0]))          # IP
         ba.extend(self.infoS[1].to_bytes(length=2, byteorder='big'))    # Porta
         ba.extend((10).to_bytes(length=2, byteorder='big'))  # TTL
-        ba.extend(listToBytes([]))                          # Lista
+        ba.extend(listByteEncoder([]))                          # Lista
         assert ba == messages.query_encode(self.infoS, 10, [])
     
-    def test_hello_decode(self):
+    def test_query_decode(self):
         tuple = messages.query_decode(messages.query_encode(self.infoS, 1, [3,1,2]))
         assert tuple == (self.infoS[0], self.infoS[1], 1, [3,1,2])
         
