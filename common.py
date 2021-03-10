@@ -1,3 +1,7 @@
+def logexit(err):
+    print(err)
+    sys.exit(1)
+
 def messageList(id, lst):
     """
     Cria uma mensagem com id passado e lista a ser codificada por 
