@@ -1,6 +1,22 @@
+import socket
+import sys
+
+
 def logexit(err):
     print(err)
     sys.exit(1)
+
+def ipPortaSplit(ipPorta):
+    """
+    Transforma uma string "IP:porta" em um IP aceito pela biblioteca socket 
+    e porta do tipo inteiro
+    """
+    ipPortaLst = ipPorta.split(":")
+    assert len(ipPortaLst) == 2
+    ip = socket.inet_ntoa(socket.inet_aton(ipPortaLst[0]))  
+    porta = int(ipPortaLst[1])
+    return ip, porta
+
 
 def messageList(id, lst):
     """
