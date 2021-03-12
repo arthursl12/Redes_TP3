@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
+from messages import chunk_info_encode, hello_decode, hello_encode
 import socket
-from common import logexit, ipPortaSplit
+from common import logexit, ipPortaSplit, msgId
 
 
 def main():
@@ -31,7 +32,7 @@ def main():
         line = "".join(line.split())    # Remove espaços
         pairLst = line.split(":")       # Separa no ":"
         assert len(pairLst) == 2
-        chunks[pairLst[0]] = pairLst[1]
+        chunks[int(pairLst[0])] = pairLst[1]
     print(f"[log] Chunks carregados: {chunks}")
      
     # Cria soquete UDP
@@ -46,6 +47,27 @@ def main():
         logexit(str(e))
     infoSock = udp_socket.getsockname()
     print(f"[log] Soquete UDP criado em {infoSock[0]}:{infoSock[1]}")
+    print(f"[log] Aguardando mensagens...")
+    
+    while(True):
+        msg,addr = udp_socket.recvfrom(1024)
+        msg = bytearray(msg)
+        if (msgId(msg) == 1):
+            clnt_chnks = hello_decode(msg)
+            print(f"[log] Recebido hello de {addr[0]}:{addr[1]}, "+
+                  f"requisitando as chunks {clnt_chnks}")
+            
+            # Acha os chunks requisitados pelo cliente que o peer possui
+            validos = []
+            for key in chunks:
+                if (key in clnt_chnks):
+                    validos.append(key)
+                    
+            # Retorna chunk_info para o cliente
+            chk_info = chunk_info_encode(validos)
+            udp_socket.sendto(chk_info, addr)
+            
+        pass
 
     # Fecha o soquete UDP
     udp_socket.close()
