@@ -4,19 +4,14 @@ import argparse
 import socket
 
 from common import createUDP, ipPortaSplit, logexit, msgId
-from messages import chunk_info_encode, hello_decode, hello_encode
+from messages import chunk_info_encode, get_decode, hello_decode, hello_encode, query_decode, query_encode, response_encode
 
-
-def handleHello(udp_socket, msg, addr, chunks):
+def checkChunks(udp_socket, chunks, clnt_chnks, addr_client):
     """
-    Função Auxiliar para o Peer decodificar uma mensagem Hello do cliente.
-    Envia para o mesmo cliente a mensagem Chunk_Info com as chunks disponíveis
-    neste peer.
+    Dado os chunks requisitados pelo cliente 'clnt_chnks', acha aqueles que o 
+    peer possui e retorna mensagem(ns) chunk_info para o cliente passado caso
+    possua algum desses chunks
     """
-    clnt_chnks = hello_decode(msg)
-    print(f"[log] Recebido hello de {addr[0]}:{addr[1]}, "+
-            f"requisitando as chunks {clnt_chnks}")
-    
     # Acha os chunks requisitados pelo cliente que o peer possui
     validos = []
     for key in chunks:
@@ -25,7 +20,37 @@ def handleHello(udp_socket, msg, addr, chunks):
             
     # Retorna chunk_info para o cliente
     chk_info = chunk_info_encode(validos)
-    udp_socket.sendto(chk_info, addr)
+    udp_socket.sendto(chk_info, addr_client)
+
+def alagamento(udp_socket, vizinhos, addr_client, TTL, clnt_chnks, origin=None):
+    """
+    Faz o alagamento, isto é, envia uma mensagem Query para seus vizinhos
+    (exceto para peer que nos enviou recebemos, se for o caso)
+    """
+    print(f"[log] Alagamento em progresso, TTL={TTL}")
+    for pair in vizinhos:
+        if (origin is not None and pair == origin):
+            print(f"[log] Não enviar Query para {pair}, que mandou a Query")
+            continue
+        msg = query_encode(addr_client, TTL, clnt_chnks)
+        udp_socket.sendto(msg, pair)
+        print(f"[log] Enviando Query para {pair}")
+    print(f"[log] Fim do alagamento")
+
+def handleHello(udp_socket, msg, addr, chunks, vizinhos):
+    """
+    Função Auxiliar para o Peer decodificar uma mensagem Hello do cliente.
+    Envia para o mesmo cliente a mensagem Chunk_Info com as chunks disponíveis
+    neste peer.
+    Faz o alagamento para seus vizinhos.
+    """
+    clnt_chnks = hello_decode(msg)
+    print(f"[log] Recebido hello de {addr[0]}:{addr[1]}, "+
+            f"requisitando as chunks {clnt_chnks}")
+
+    checkChunks(udp_socket, chunks, clnt_chnks, addr)
+    alagamento(udp_socket, vizinhos, addr, 3, clnt_chnks)
+    
 
 def parseArguments():
     # Parsing dos argumentos
@@ -55,18 +80,30 @@ def parseArguments():
             assert len(pairLst) == 2
             chunks[int(pairLst[0])] = pairLst[1]
     print(f"[log] Chunks carregados: {chunks}")
-    return ip, porta, chunks
+    return ip, porta, chunks, vizinhos
 
 def main():
     # peer <IP:port> <key-values-files_peer[id]> <ip1:port1> ... <ipN:portN>
-    ip, porta, chunks = parseArguments()
+    ip, porta, chunks, vizinhos = parseArguments()
     udp_socket = createUDP(ip, porta)
     
     while(True):
         msg,addr = udp_socket.recvfrom(1024)
         msg = bytearray(msg)
         if (msgId(msg) == 1):
-            handleHello(udp_socket, msg, addr, chunks)
+            handleHello(udp_socket, msg, addr, chunks, vizinhos)
+        elif (msgId(msg) == 4):
+            req_chnks = get_decode(msg)
+            print(f"[log] Recebido get de {addr[0]}:{addr[1]}, "+
+                    f"requisitando as chunks {req_chnks}")
+            # TODO: response encode
+        elif (msgId(msg) == 2):
+            ipC, portoC, TTL, clnt_chnks = query_decode(msg)
+            checkChunks(udp_socket, chunks, clnt_chnks, (ipC, portoC))
+            alagamento(udp_socket, vizinhos, (ipC, portoC), TTL-1, clnt_chnks, origin=addr)
+            
+            
+
             
         pass
 
