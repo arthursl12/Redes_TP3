@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-from messages import chunk_info_encode, hello_decode, hello_encode
 import socket
-from common import logexit, ipPortaSplit, msgId, createUDP
+
+from common import createUDP, ipPortaSplit, logexit, msgId
+from messages import chunk_info_encode, hello_decode, hello_encode
+
 
 def handleHello(udp_socket, msg, addr, chunks):
     """
@@ -47,11 +49,11 @@ def parseArguments():
     # Obtém as chunks que possui do arquivo passado
     chunks = {}     # Dict de tuplas (id,nome) dos vizinhos
     with open(args.keyValues) as f:
-        line = f.readline()
-        line = "".join(line.split())    # Remove espaços
-        pairLst = line.split(":")       # Separa no ":"
-        assert len(pairLst) == 2
-        chunks[int(pairLst[0])] = pairLst[1]
+        for line in f:
+            line = "".join(line.split())    # Remove espaços
+            pairLst = line.split(":")       # Separa no ":"
+            assert len(pairLst) == 2
+            chunks[int(pairLst[0])] = pairLst[1]
     print(f"[log] Chunks carregados: {chunks}")
     return ip, porta, chunks
 
