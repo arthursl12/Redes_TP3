@@ -1,7 +1,6 @@
 import socket
 import sys
 
-
 def logexit(err):
     print(err)
     sys.exit(1)
@@ -17,6 +16,24 @@ def ipPortaSplit(ipPorta):
     porta = int(ipPortaLst[1])
     return ip, porta
 
+def createUDP(ip, porta):
+    """
+    Cria e retorna um soquete UDP com IP e porta fornecidos
+    """
+    # Cria soquete UDP
+    print(f"[log] Criando soquete UDP")
+    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    # Habilita para conexões
+    try:  
+        udp_socket.bind((ip,porta))
+    except socket.error as e:
+        logexit(str(e))
+    infoSock = udp_socket.getsockname()
+    print(f"[log] Soquete UDP criado em {infoSock[0]}:{infoSock[1]}")
+    print(f"[log] Aguardando mensagens...")
+    return udp_socket
 
 def messageList(id, lst):
     """
