@@ -2,12 +2,10 @@
 
 import argparse
 import os
-import socket
 
 from common import createUDP, ipPortaSplit, logexit, msgId
 from messages import (chunk_info_encode, get_decode, hello_decode,
-                      hello_encode, query_decode, query_encode,
-                      response_encode)
+                      query_decode, query_encode, response_encode)
 
 
 def checkChunks(udp_socket, chunks, clnt_chnks, addr_client):

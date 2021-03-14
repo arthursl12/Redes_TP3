@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
-from peer import handleHello
 import socket
+import time
 
 from common import createUDP, ipPortaSplit, logexit, msgId
-from messages import chunk_info_decode, get_encode, hello_encode, response_decode
+from messages import (chunk_info_decode, get_encode, hello_encode,
+                      response_decode)
 
+TIMEOUT_MAX = 5
 
 def parseArguments():
     # Parsing dos argumentos
@@ -51,25 +53,36 @@ def main():
     # cliente <IP:port> <5,6,7>
     ip, porta, chunks = parseArguments()
     udp_socket = createUDP("",0)
+    udp_socket.settimeout(TIMEOUT_MAX)
     
     # Envia HELLO para peer de contato
     print(f"[log] Enviando hello")
     msg = hello_encode(chunks)
     udp_socket.sendto(msg, (ip,porta))
     
+    
     # Aguarda chunk_infos, com timeout de 5s após a última mensagem recebida
     # Heurística pseudo-aleatória para Get: peer cujo chunk_info chega primeiro
     print(f"[log] Aguardando chunk_info's")
-    hasTimedOut = False
     alreadySentGet = {i:False for i in chunks}
-    alreadyGot = {i:False for i in chunks}
-    print(alreadySentGet)
-    while (not hasTimedOut):
-        msg,addr = udp_socket.recvfrom(1024)
+    alreadyGot = {i:False for i in chunks} 
+    while (True):
+        # Controle das chunks necessárias já recebidas
+        if all(alreadyGot[id] == True for id in alreadyGot):
+            print("[log] Já recembemos todas as chunks, podemos sair do loop")
+            break
+        
+        # Controle de Timeouts
+        try:
+            msg,addr = udp_socket.recvfrom(2048)
+        except socket.timeout:
+            print("[log] TIMEOUT: ou a chunk não está disponível ou não pode ser acessada (muito distante)")
+            break
+    
+        # Handle das mensagens recebidas
         msg = bytearray(msg)
         if (msgId(msg) == 3):
             handleChunkInfo(udp_socket, msg, addr, chunks, alreadySentGet)
-            print(alreadySentGet)
         elif (msgId(msg) == 5):
             # Handle Response
             id, success = response_decode(msg)
@@ -82,10 +95,6 @@ def main():
         else:
             logexit("Mensagem com id inválido")
             
-                    
-    
-
-    
     # Fecha o soquete UDP
     udp_socket.close()
 
