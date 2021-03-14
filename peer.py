@@ -54,7 +54,7 @@ def handleHello(udp_socket, msg, addr, chunks, vizinhos):
     alagamento(udp_socket, vizinhos, addr, 3, clnt_chnks)
     
 
-def handleGet(udp_socket, addr_client, msg_get):
+def handleGet(udp_socket, addr_client, msg_get, filename, extension):
     """
     Função Auxiliar para o Peer montar uma mensagem Response após Get recebido
     do cliente. 
@@ -70,7 +70,7 @@ def handleGet(udp_socket, addr_client, msg_get):
     # Envia Response para cada chunk requisitada
     for chunk_id in req_chnks:
         chunk_size = os.path.getsize(f"BigBuckBunny_{chunk_id}.m4s")
-        reponse = response_encode(chunk_id, chunk_size)
+        reponse = response_encode(chunk_id, chunk_size, filename, extension)
         udp_socket.sendto(reponse, addr_client)
         print(f"[log] Response com a chunk {chunk_id} "+
                 f"para {addr_client[0]}:{addr_client[1]} enviada")
@@ -105,6 +105,29 @@ def parseArguments():
     print(f"[log] Chunks carregados: {chunks}")
     return ip, porta, chunks, vizinhos
 
+def fileInfoFromDict(d):
+    """
+    Dado um dicionário com keys inteiras e um nome de arquivo como valor, 
+    retornao nome-base (antes do '_') e a extensão dos arquivos ali guardados. 
+    Por exemplo: se guardado {3:'BigBuckBunny_3.m4s'}, retornará 'BigBuckBunny'
+    e também 'm4s'
+    """
+    full = None
+    for key in d:
+        full = d[key]
+        break
+    
+    # Pega o nome-base das chunks
+    pairLst = full.split("_")       # Separa no "_"
+    assert len(pairLst) == 2
+    filename = pairLst[0]
+    
+    # Pega a extensão do arquivo das chunks
+    pairLst = pairLst[1].split(".") # Separa no "_"
+    assert len(pairLst) == 2
+    fileextension = pairLst[1]
+    return filename, fileextension
+
 def main():
     # peer <IP:port> <key-values-files_peer[id]> <ip1:port1> ... <ipN:portN>
     ip, porta, chunks, vizinhos = parseArguments()
@@ -122,7 +145,8 @@ def main():
             alagamento(udp_socket, vizinhos, (ipC, portoC), 
                        TTL-1, clnt_chnks, origin=addr)
         elif (msgId(msg) == 4):
-            handleGet(udp_socket, addr, msg)
+            filename, ext = fileInfoFromDict(chunks)
+            handleGet(udp_socket, addr, msg, filename, ext)
         else:
             logexit("Mensagem com id inválido")
 

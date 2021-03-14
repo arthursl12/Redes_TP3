@@ -19,7 +19,7 @@ class TestId:
         assert msgId(messages.get_encode([1])) == 4
         assert msgId(messages.chunk_info_encode([2,5,3,67,3])) == 3
         assert msgId(messages.query_encode(self.infoS, 3, [1])) == 2
-        assert msgId(messages.response_encode(1,1000)) == 5
+        assert msgId(messages.response_encode(1,1000,"BigBuckBunny","m4s")) == 5
 
 class TestHello:
     def test_hello_msg_varios(self):
@@ -163,15 +163,6 @@ class TestQuery:
         assert tuple == (self.infoS[0], self.infoS[1], 10, [])
 
 class TestResponseEncode:
-    def setup_method(self):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.s.bind(('',0))
-        self.infoS = self.s.getsockname()
-    
-    def teardown_method(self):
-        self.s.close()
-    
     def test_query_uma(self):
         ba = bytearray()
         ba.extend((5).to_bytes(length=2, byteorder='big'))  # id
@@ -183,7 +174,7 @@ class TestResponseEncode:
         pl = bytearray(pl)
         ba.extend(pl)
         
-        assert ba == messages.response_encode(8,1024)
+        assert ba == messages.response_encode(8,1024,"BigBuckBunny","m4s")
         assert len(ba) == 2+2+2+1024
         assert len(ba) <= 2+2+2+1024
     
@@ -199,7 +190,7 @@ class TestResponseEncode:
             pl = bytearray(pl)
             ba.extend(pl)
             
-            assert ba == messages.response_encode(i,1024)
+            assert ba == messages.response_encode(i,1024,"BigBuckBunny","m4s")
             assert len(ba) == 2+2+2+1024
             assert len(ba) <= 2+2+2+1024
             
@@ -207,7 +198,7 @@ class TestResponseEncode:
     
     def test_response_decode(self):
         for i in range(1,10):
-            tuple = messages.response_decode(messages.response_encode(i,1024))
+            tuple = messages.response_decode(messages.response_encode(i,1024,"BigBuckBunny","m4s"))
             assert tuple == (i, True)
             
             with open(f"BigBuckBunny_{i}.m4s",'rb') as file:

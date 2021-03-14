@@ -98,7 +98,7 @@ def query_decode(msg):
     lst = listByteDecoder(msg[10:])
     return (ip, porto, ttl, lst)
 
-def response_encode(chunk_id, chunk_size):
+def response_encode(chunk_id, chunk_size, filename, file_extension):
     """
     Cria e retorna uma mensagem binária do tipo Response: 
         2 bytes, representando o 5 (código da mensagem); 
@@ -114,14 +114,14 @@ def response_encode(chunk_id, chunk_size):
     ba.extend(chunk_size.to_bytes(length=2, byteorder='big'))   # chunk_size
     
     # Carrega a chunk do arquivo
-    with open(f"BigBuckBunny_{chunk_id}.m4s",'rb') as file:
+    with open(f"{filename}_{chunk_id}.{file_extension}",'rb') as file:
         pl = file.read(chunk_size)
     pl = bytearray(pl)
     ba.extend(pl)
     
     return ba
 
-def response_decode(msg):
+def response_decode(msg, outputFolder="output"):
     """
     Decodifica uma mensagem em binário do tipo Response. 
     Verifica seu id e tamanho, levanta uma exceção se houver algo errado. 
@@ -131,9 +131,9 @@ def response_decode(msg):
     assert msgId(msg) == 5
     chunk_id = int.from_bytes(msg[2:4], "big")
     chunk_size = int.from_bytes(msg[4:6], "big")
-    if not os.path.exists("output"):
-        os.makedirs("output")
-    with open(f"output/BigBuckBunny_{chunk_id}.m4s", "wb") as file:
+    if not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
+    with open(f"{outputFolder}/BigBuckBunny_{chunk_id}.m4s", "wb") as file:
         pl = bytearray(msg[6:])
         file.write(pl)
     return (chunk_id, True)
