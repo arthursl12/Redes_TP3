@@ -29,7 +29,7 @@ def parseArguments():
 
 def handleChunkInfo(udp_socket, msg, addr, chunks, alreadySentGet):
     """
-    Função Auxiliar para o Cliente decodificar uma mensagem Chunk_Info
+    Função Auxiliar para o Cliente decodificar uma mensagem Chunk_Info.
     Se for o caso, envia para o mesmo peer mensagem(ns) get requisitando chunks
     que esse cliente precisa.
     """
