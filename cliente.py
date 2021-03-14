@@ -61,7 +61,9 @@ def main():
     udp_socket.sendto(msg, (ip,porta))
     
     # Limpa arquivo "output-IP.log"
-    with open(f"output-{ip}.log","w") as f:
+    infoSock = udp_socket.getsockname()
+    ipClient = infoSock[0]
+    with open(f"output-{ipClient}.log","w") as f:
         pass
     
     
@@ -81,7 +83,7 @@ def main():
             msg,addr = udp_socket.recvfrom(2048)
         except socket.timeout:
             print("[log] TIMEOUT: ou a chunk não está disponível ou não pode ser acessada (muito distante)")
-            with open(f"output-{ip}.log","a") as f:
+            with open(f"output-{ipClient}.log","a") as f:
                 for id in alreadySentGet:
                     if (alreadySentGet[id] == False):
                         f.write(f"0.0.0.0:0 - {id}\n")
@@ -100,7 +102,7 @@ def main():
             print(f"[log] Chunk {id} já disponível em disco")
             updt_dict = {id:True}
             alreadyGot.update(updt_dict)
-            with open(f"output-{ip}.log","a") as f:
+            with open(f"output-{ipClient}.log","a") as f:
                 f.write(f"{addr[0]}:{addr[1]} - {id}\n")
         else:
             logexit("Mensagem com id inválido")
