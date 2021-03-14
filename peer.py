@@ -27,8 +27,12 @@ def checkChunks(udp_socket, chunks, clnt_chnks, addr_client):
 def alagamento(udp_socket, vizinhos, addr_client, TTL, clnt_chnks, origin=None):
     """
     Faz o alagamento, isto é, envia uma mensagem Query para seus vizinhos
-    (exceto para peer que nos enviou recebemos, se for o caso)
+    (exceto para peer que nos enviou recebemos, se for o caso). 
+    Não faz o alagamento se o TTL for 0
     """
+    if (TTL == 0):
+        print(f"[log] Não haverá alagamento, visto que TTL={TTL}")
+        return
     print(f"[log] Alagamento em progresso, TTL={TTL}")
     for pair in vizinhos:
         if (origin is not None and pair == origin):

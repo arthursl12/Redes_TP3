@@ -61,8 +61,7 @@ def main():
     udp_socket.sendto(msg, (ip,porta))
     
     # Limpa arquivo "output-IP.log"
-    infoSock = udp_socket.getsockname()
-    ipClient = infoSock[0]
+    ipClient = socket.gethostbyname(socket.gethostname())
     with open(f"output-{ipClient}.log","w") as f:
         pass
     
