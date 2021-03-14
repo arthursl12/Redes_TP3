@@ -5,7 +5,7 @@ from peer import handleHello
 import socket
 
 from common import createUDP, ipPortaSplit, logexit, msgId
-from messages import chunk_info_decode, get_encode, hello_encode
+from messages import chunk_info_decode, get_encode, hello_encode, response_decode
 
 
 def parseArguments():
@@ -62,6 +62,7 @@ def main():
     print(f"[log] Aguardando chunk_info's")
     hasTimedOut = False
     alreadySentGet = {i:False for i in chunks}
+    alreadyGot = {i:False for i in chunks}
     print(alreadySentGet)
     while (not hasTimedOut):
         msg,addr = udp_socket.recvfrom(1024)
@@ -69,6 +70,17 @@ def main():
         if (msgId(msg) == 3):
             handleChunkInfo(udp_socket, msg, addr, chunks, alreadySentGet)
             print(alreadySentGet)
+        elif (msgId(msg) == 5):
+            # Handle Response
+            id, success = response_decode(msg)
+            print(f"[log] Recebido response de {addr[0]}:{addr[1]}, "+
+                  f"com a chunk {id}")
+            assert success
+            print(f"[log] Chunk {id} já disponível em disco")
+            updt_dict = {id:True}
+            alreadyGot.update(updt_dict)
+        else:
+            logexit("Mensagem com id inválido")
             
                     
     

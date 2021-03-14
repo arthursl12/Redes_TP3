@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import socket
 
 from common import createUDP, ipPortaSplit, logexit, msgId
-from messages import chunk_info_encode, get_decode, hello_decode, hello_encode, query_decode, query_encode, response_encode
+from messages import (chunk_info_encode, get_decode, hello_decode,
+                      hello_encode, query_decode, query_encode,
+                      response_encode)
+
 
 def checkChunks(udp_socket, chunks, clnt_chnks, addr_client):
     """
@@ -52,6 +56,27 @@ def handleHello(udp_socket, msg, addr, chunks, vizinhos):
     alagamento(udp_socket, vizinhos, addr, 3, clnt_chnks)
     
 
+def handleGet(udp_socket, addr_client, msg_get):
+    """
+    Função Auxiliar para o Peer montar uma mensagem Response após Get recebido
+    do cliente. 
+    Envia para o mesmo cliente a mensagem(ns) Response com as chunks que ele 
+    pediu. (A chunk com certeza está neste peer, pois a decisão do cliente foi 
+    baseada na chunk_info enviada por este peer). 
+    """
+    # Decodifica a mensagem Get recebida
+    req_chnks = get_decode(msg_get)
+    print(f"[log] Recebido get de {addr_client[0]}:{addr_client[1]}, "+
+            f"requisitando as chunks {req_chnks}")
+    
+    # Envia Response para cada chunk requisitada
+    for chunk_id in req_chnks:
+        chunk_size = os.path.getsize(f"BigBuckBunny_{chunk_id}.m4s")
+        reponse = response_encode(chunk_id, chunk_size)
+        udp_socket.sendto(reponse, addr_client)
+        print(f"[log] Response com a chunk {chunk_id} "+
+                f"para {addr_client[0]}:{addr_client[1]} enviada")
+
 def parseArguments():
     # Parsing dos argumentos
     parser = argparse.ArgumentParser()
@@ -92,20 +117,16 @@ def main():
         msg = bytearray(msg)
         if (msgId(msg) == 1):
             handleHello(udp_socket, msg, addr, chunks, vizinhos)
-        elif (msgId(msg) == 4):
-            req_chnks = get_decode(msg)
-            print(f"[log] Recebido get de {addr[0]}:{addr[1]}, "+
-                    f"requisitando as chunks {req_chnks}")
-            # TODO: response encode
         elif (msgId(msg) == 2):
+            # Handle Query
             ipC, portoC, TTL, clnt_chnks = query_decode(msg)
             checkChunks(udp_socket, chunks, clnt_chnks, (ipC, portoC))
-            alagamento(udp_socket, vizinhos, (ipC, portoC), TTL-1, clnt_chnks, origin=addr)
-            
-            
-
-            
-        pass
+            alagamento(udp_socket, vizinhos, (ipC, portoC), 
+                       TTL-1, clnt_chnks, origin=addr)
+        elif (msgId(msg) == 4):
+            handleGet(udp_socket, addr, msg)
+        else:
+            logexit("Mensagem com id inválido")
 
     # Fecha o soquete UDP
     udp_socket.close()
