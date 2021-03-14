@@ -60,6 +60,10 @@ def main():
     msg = hello_encode(chunks)
     udp_socket.sendto(msg, (ip,porta))
     
+    # Limpa arquivo "output-IP.log"
+    with open(f"output-{ip}.log","w") as f:
+        pass
+    
     
     # Aguarda chunk_infos, com timeout de 5s após a última mensagem recebida
     # Heurística pseudo-aleatória para Get: peer cujo chunk_info chega primeiro
@@ -77,6 +81,10 @@ def main():
             msg,addr = udp_socket.recvfrom(2048)
         except socket.timeout:
             print("[log] TIMEOUT: ou a chunk não está disponível ou não pode ser acessada (muito distante)")
+            with open(f"output-{ip}.log","a") as f:
+                for id in alreadySentGet:
+                    if (alreadySentGet[id] == False):
+                        f.write(f"0.0.0.0:0 - {id}\n")
             break
     
         # Handle das mensagens recebidas
@@ -92,6 +100,8 @@ def main():
             print(f"[log] Chunk {id} já disponível em disco")
             updt_dict = {id:True}
             alreadyGot.update(updt_dict)
+            with open(f"output-{ip}.log","a") as f:
+                f.write(f"{addr[0]}:{addr[1]} - {id}\n")
         else:
             logexit("Mensagem com id inválido")
             
