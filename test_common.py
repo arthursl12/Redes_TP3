@@ -6,11 +6,11 @@ from common import listToBytes, bytesToList
 """
 Possíveis testes de msgs:
 - Teste comum
-- Uma chunk única em um único peer
+- Uma chunk única em um único peer (OK)
 - Uma chunk única em cada peer
-- Alguns peers vazios
-- Só um peer possui tudo
-- Todos os peers vazios
+- Alguns peers vazios (OK)
+- Só um peer possui tudo (OK)
+- Todos os peers vazios (OK)
 """
 
 class Test_listToBytes:

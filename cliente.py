@@ -59,9 +59,9 @@ def main():
     print(f"[log] Enviando hello")
     msg = hello_encode(chunks)
     udp_socket.sendto(msg, (ip,porta))
-    
+
     # Limpa arquivo "output-IP.log"
-    ipClient = socket.gethostbyname(socket.gethostname())
+    ipClient = udp_socket.getsockname()
     with open(f"output-{ipClient}.log","w") as f:
         pass
     
