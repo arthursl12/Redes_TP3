@@ -121,19 +121,19 @@ def response_encode(chunk_id, chunk_size, filename, file_extension):
     
     return ba
 
-def response_decode(msg, outputFolder="output"):
+def response_decode(msg, outputFolder="", filename="chunk"):
     """
     Decodifica uma mensagem em binário do tipo Response. 
     Verifica seu id e tamanho, levanta uma exceção se houver algo errado. 
-    Já escreve o arquivo com payload da chunk na pasta output.
+    Já escreve o arquivo com payload da chunk na pasta raiz por padrão.
     Retorna o id do chunk escrito e se a operação teve sucesso (booleano).  
     """
     assert msgId(msg) == 5
     chunk_id = int.from_bytes(msg[2:4], "big")
     chunk_size = int.from_bytes(msg[4:6], "big")
-    if not os.path.exists(outputFolder):
+    if len(outputFolder)>0 and not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
-    with open(f"{outputFolder}/BigBuckBunny_{chunk_id}.m4s", "wb") as file:
+    with open(f"{outputFolder}/{filename}{chunk_id}.m4s", "wb") as file:
         pl = bytearray(msg[6:])
         file.write(pl)
     return (chunk_id, True)

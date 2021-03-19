@@ -198,7 +198,7 @@ class TestResponseEncode:
     
     def test_response_decode(self):
         for i in range(1,10):
-            tuple = messages.response_decode(messages.response_encode(i,1024,"BigBuckBunny","m4s"))
+            tuple = messages.response_decode(messages.response_encode(i,1024,"BigBuckBunny","m4s"),outputFolder="output")
             assert tuple == (i, True)
             
             with open(f"BigBuckBunny_{i}.m4s",'rb') as file:
