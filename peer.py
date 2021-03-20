@@ -82,15 +82,15 @@ def handleGet(udp_socket, addr_client, msg_get, filename, extension):
 def parseArguments():
     # Parsing dos argumentos
     parser = argparse.ArgumentParser()
-    parser.add_argument("porta", help="porta do ponto de contato")
+    parser.add_argument("ip_porta", help="IP:porta deste peer")
     parser.add_argument("keyValues", help="Arquivo keyvalues a ser usado")
-    parser.add_argument("neighbours", help="Lista de vizinhos do peer", nargs='+')
+    parser.add_argument("neighbours", help="Lista de vizinhos deste peer", nargs='+')
     args = parser.parse_args()
 
-    # Trata a porta recebida
-    # ip, porta = ipPortaSplit(args.ip_porta)
+    # Trata o IP e a porta recebida
+    ip, porta = ipPortaSplit(args.ip_porta)
     porta = int(args.porta)
-    print(f"[log] Conectaremos no porto {porta}")
+    print(f"[log] Conectaremos no IP {ip}, porto {porta}")
 
     # Forma a lista de peers vizinhos
     vizinhos = []   # Lista de tuplas (ip,porta) dos vizinhos
@@ -108,7 +108,7 @@ def parseArguments():
             assert len(pairLst) == 2
             chunks[int(pairLst[0])] = pairLst[1]
     print(f"[log] Chunks carregados: {chunks}")
-    return porta, chunks, vizinhos
+    return ip, porta, chunks, vizinhos
 
 def fileInfoFromDict(d):
     """
@@ -135,8 +135,8 @@ def fileInfoFromDict(d):
 
 def main():
     # peer <IP:port> <key-values-files_peer[id]> <ip1:port1> ... <ipN:portN>
-    porta, chunks, vizinhos = parseArguments()
-    udp_socket = createUDP("", porta)
+    ip, porta, chunks, vizinhos = parseArguments()
+    udp_socket = createUDP(ip, porta)
     
     while(True):
         msg,addr = udp_socket.recvfrom(1024)
