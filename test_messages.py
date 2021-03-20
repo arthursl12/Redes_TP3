@@ -205,9 +205,9 @@ class TestResponseEncode:
                 pl0 = file.read(1024)
             pl0 = bytearray(pl0)
             
-            with open(f"output/BigBuckBunny_{i}.m4s",'rb') as file:
+            with open(f"output/chunk{i}.m4s",'rb') as file:
                 pl1 = file.read(1024)
             pl1 = bytearray(pl1)
             
             assert pl0 == pl1
-            os.remove(f"output/BigBuckBunny_{i}.m4s")
+            os.remove(f"output/chunk{i}.m4s")
