@@ -1,4 +1,0 @@
-./peer.py 5000 key-values-files_peer1 127.0.0.1:5001 127.0.0.1:5002
-
-
-./cliente.py 127.0.0.1:5001 1
