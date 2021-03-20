@@ -84,12 +84,11 @@ def parseArguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("ip_porta", help="IP:porta deste peer")
     parser.add_argument("keyValues", help="Arquivo keyvalues a ser usado")
-    parser.add_argument("neighbours", help="Lista de vizinhos deste peer", nargs='+')
+    parser.add_argument("neighbours", help="Lista de vizinhos deste peer", nargs='*')
     args = parser.parse_args()
 
     # Trata o IP e a porta recebida
     ip, porta = ipPortaSplit(args.ip_porta)
-    porta = int(args.porta)
     print(f"[log] Conectaremos no IP {ip}, porto {porta}")
 
     # Forma a lista de peers vizinhos
